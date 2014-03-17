@@ -21,6 +21,11 @@ class Document(object):
 		else:
 			self.WORD_FREQS[word] = 1
 
+	def findWords(self, tagged):
+		for w in tagged:
+			if w[1] == 'NN' or w[1] == 'NNS' or w[1] == 'NNP' or w[1] == 'NNPS':
+				self.addWord(w[0])
+
 # A Test Document - inherits from Document
 class Query(Document):
 	"""A Query Document"""
@@ -49,11 +54,14 @@ dir = os.path.dirname(os.path.realpath(inputLabelsFile))
 fid = open(inputLabelsFile, 'r')
 line1 = fid.readline()
 g = nltk.word_tokenize(line1)
+doc1 = Document(g[1])
 
 tagged = tokNTag(dir+'/'+g[0])
+doc1.findWords(tagged)
 
-
-print tagged[0:10]
+print doc1.WORD_FREQS
+newFile = open('Output', 'w')
+newFile.write(str(tagged))
 
 #for line in fid:
 
