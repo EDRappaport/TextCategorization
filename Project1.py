@@ -1,6 +1,7 @@
 import sys
 import os
 import nltk
+#from nltk.tokenize import TreebankWordTokenizer
 
 # REQUIRES INSTALLATION OF NLTK AND OTHER PACKAGES
 # OUTLINED IN: http://www.nltk.org/install.html AND
@@ -37,8 +38,12 @@ class Query(Document):
 def tokNTag(file):
 	fid = open(file, 'r')
 	doc = fid.read()
-	tok = nltk.word_tokenize(doc)
-	tagged = nltk.pos_tag(tok)
+	sentTok = nltk.sent_tokenize(doc)
+	tagged = []
+	for sent in sentTok:
+		wordTok = nltk.word_tokenize(sent)
+		t = nltk.pos_tag(wordTok)
+		tagged.extend(t)
 	fid.close()
 	return tagged
 
