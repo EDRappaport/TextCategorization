@@ -1,5 +1,6 @@
 import sys
 import os
+import math
 import nltk
 
 # REQUIRES INSTALLATION OF NLTK AND OTHER PACKAGES
@@ -49,6 +50,19 @@ def tokNTag(file):
 
 # Function to calculate distance between two documents
 def dist(q, d):
+	numerator  = 0
+	den1 = 0
+	den2 = 0
+
+	for w in q.WORD_FREQS:
+		den1 += (q.WORD_FREQS[w]**2)
+		if w in d.WORD_FREQS:
+			numerator += q.WORD_FREQS[w] * d.WORD_FREQS[w]
+
+	for w in d.WORD_FREQS:
+		den2 += (d.WORD_FREQS[w]**2)
+
+	distance = numerator/(math.sqrt(den1) * math.sqrt(den2))
 	return distance
 
 # function to find KNN. Takes in one query,
@@ -59,11 +73,16 @@ def KNN(query, docs, k):
 
 	for doc in docs:
 		distance = dist(query, doc)
+
+		if len(KNN) == 0:
+			KNN.append(distance)
+			KND.append(doc)
+			continue
 		for ind in range(0, len(KNN)):
-			if distance < KNN[ind]:
+			if distance > KNN[ind]:
 				KNN.insert(ind, distance)
 				KND.insert(ind, doc)
-				pass
+				break
 			elif ind == len(KNN)-1:
 				KNN.append(distance)
 				KND.append(doc)
@@ -76,6 +95,7 @@ def KNN(query, docs, k):
 # MAIN
 if len(sys.argv) != 3:
 	print("Usage: python Project1.py <Training Labels File> <Test Labels File>")
+	print("Example: python Project1.py corpus1_train.labels corpus1_test.list")
 	sys.exit(-1)
 
 #Process training files
@@ -98,10 +118,6 @@ for line in fid:
 
 fid.close()
 
-
-for d in docs:
-	print d.label
-
 # Process test files
 testLabelsFile = str(sys.argv[2])
 dir = os.path.dirname(os.path.realpath(testLabelsFile))
@@ -110,12 +126,16 @@ fid = open(testLabelsFile, 'r')
 
 queries = []
 for line in fid:
-	curFile = nltk.word_tokenize(line)
+	lineTok = nltk.word_tokenize(line)
+	curFile = lineTok[0]
 	curQuery = Query(curFile)
 
 	tagged = tokNTag(dir+'/'+curFile)
 	curQuery.findWords(tagged)
 
 	queries.append(curQuery)
+	KND = KNN(curQuery, docs, 5)
+	for i in KND:
+		print i.label
 
 fid.close()
