@@ -53,4 +53,4 @@ for line in fid_i:
 fid_i.close()
 fid_training.close()
 fid_test.close()
-
+fid_testAnswers.close()
