@@ -1,7 +1,7 @@
 import sys
 import os
+import array
 import nltk
-#from nltk.tokenize import TreebankWordTokenizer
 
 # REQUIRES INSTALLATION OF NLTK AND OTHER PACKAGES
 # OUTLINED IN: http://www.nltk.org/install.html AND
@@ -31,8 +31,9 @@ class Document(object):
 class Query(Document):
 	"""A Query Document"""
 
-	def __init__(self):
+	def __init__(self, fn):
 		self.WORD_FREQS = {} #empty dictionary (hash table)
+		self.fileName = fn
 
 # Function to Toeknize and then Tag input file
 def tokNTag(file):
@@ -47,27 +48,72 @@ def tokNTag(file):
 	fid.close()
 	return tagged
 
+# Function to calculate distance between two documents
+def dist(q, d):
+	return distance
+
+# function to find KNN. Takes in one query,
+# list of all docs, and the number k
+def KNN(query, docs, k):
+	KNN = array.array('i',(-1,)*k)
+	KND = []
+	for i in range(0, k):
+		KND.append(0)
+
+	for doc in docs:
+		distance = dist(query, doc)
+
+		ind = KNN.index(-1) 
+		if ind < k:
+			KNN[ind] = distance
+			KND[ind] = doc
+
+		elif 
+
 
 # MAIN
-if len(sys.argv) != 2:
-	print("Usage: python Project1.py <Input Labels File>")
+if len(sys.argv) != 3:
+	print("Usage: python Project1.py <Training Labels File> <Test Labels File>")
 	sys.exit(-1)
 
-inputLabelsFile = str(sys.argv[1])
-dir = os.path.dirname(os.path.realpath(inputLabelsFile))
+#Process training files
+trainingLabelsFile = str(sys.argv[1])
+dir = os.path.dirname(os.path.realpath(trainingLabelsFile))
 
-fid = open(inputLabelsFile, 'r')
-line1 = fid.readline()
-g = nltk.word_tokenize(line1)
-doc1 = Document(g[1])
+fid = open(trainingLabelsFile, 'r')
 
-tagged = tokNTag(dir+'/'+g[0])
-doc1.findWords(tagged)
+docs = []
+for line in fid:
+	lineTok = nltk.word_tokenize(line)
+	curFile = lineTok[0]
+	curLabel = lineTok[1]
+	curDoc = Document(curLabel)
 
-print doc1.WORD_FREQS
-newFile = open('Output', 'w')
-newFile.write(str(tagged))
+	tagged = tokNTag(dir+'/'+curFile)
+	curDoc.findWords(tagged)
 
-#for line in fid:
+	docs.append(curDoc)
+
+fid.close()
 
 
+for d in docs:
+	print d.label
+
+# Process test files
+testLabelsFile = str(sys.argv[2])
+dir = os.path.dirname(os.path.realpath(testLabelsFile))
+
+fid = open(testLabelsFile, 'r')
+
+queries = []
+for line in fid:
+	curFile = nltk.word_tokenize(line)
+	curQuery = Query(curFile)
+
+	tagged = tokNTag(dir+'/'+curFile)
+	curQuery.findWords(tagged)
+
+	queries.append(curQuery)
+
+fid.close()
