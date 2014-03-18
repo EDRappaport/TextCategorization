@@ -87,7 +87,6 @@ def KNN(query, docs, k):
 				KNN.append(distance)
 				KND.append(doc)
 
-	print KNN
 	return KND[0:k]
 
 
@@ -123,6 +122,7 @@ testLabelsFile = str(sys.argv[2])
 dir = os.path.dirname(os.path.realpath(testLabelsFile))
 
 fid = open(testLabelsFile, 'r')
+fid2 = open("Output4", 'w')
 
 queries = []
 for line in fid:
@@ -134,8 +134,25 @@ for line in fid:
 	curQuery.findWords(tagged)
 
 	queries.append(curQuery)
-	KND = KNN(curQuery, docs, 5)
-	for i in KND:
-		print i.label
+	KND = KNN(curQuery, docs, 7)
+	possibilities = {}
+	for d in KND:
+		print d.label
+		if d.label in possibilities:
+			possibilities[d.label] += 1
+		else:
+			possibilities[d.label] = 1
+	max = 0
+	for p in possibilities:
+		if possibilities[p] > max:
+			max = possibilities[p]
+			guess = p
+	print guess
+	print " "
 
-fid.close()
+	fid2.write(curFile+" "+guess+"\n")
+
+
+
+fid.close
+fid2.close()
