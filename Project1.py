@@ -1,6 +1,5 @@
 import sys
 import os
-import array
 import nltk
 
 # REQUIRES INSTALLATION OF NLTK AND OTHER PACKAGES
@@ -55,20 +54,23 @@ def dist(q, d):
 # function to find KNN. Takes in one query,
 # list of all docs, and the number k
 def KNN(query, docs, k):
-	KNN = array.array('i',(-1,)*k)
+	KNN = []
 	KND = []
-	for i in range(0, k):
-		KND.append(0)
 
 	for doc in docs:
 		distance = dist(query, doc)
+		for ind in range(0, len(KNN)):
+			if distance < KNN[ind]:
+				KNN.insert(ind, distance)
+				KND.insert(ind, doc)
+				pass
+			elif ind == len(KNN)-1:
+				KNN.append(distance)
+				KND.append(doc)
 
-		ind = KNN.index(-1) 
-		if ind < k:
-			KNN[ind] = distance
-			KND[ind] = doc
+	print KNN
+	return KND[0:k]
 
-		elif 
 
 
 # MAIN
