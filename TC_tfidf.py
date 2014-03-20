@@ -2,11 +2,17 @@ import sys
 import os
 import math
 import nltk
+from nltk.stem.lancaster import LancasterStemmer
+
+st = LancasterStemmer()
 
 # REQUIRES INSTALLATION OF NLTK AND OTHER PACKAGES
 # OUTLINED IN: http://www.nltk.org/install.html AND
 # http://www.nltk.org/data.html
 
+
+TOTAL_FREQS = {} #keep track of frequency in all docs for idf
+IDF = {} #final idf weights
 
 # A Training Document - contains its label and feature vector
 class Document(object):
@@ -18,14 +24,19 @@ class Document(object):
 
 	def addWord(self, word):
 		if word in self.WORD_FREQS:
-			self.WORD_FREQS[word] = self.WORD_FREQS[word]+1
+			self.WORD_FREQS[word] += 1
 		else:
 			self.WORD_FREQS[word] = 1
+			if word in TOTAL_FREQS:
+				TOTAL_FREQS[word] += 1
+			else :
+				TOTAL_FREQS[word] = 1
 
 	def findWords(self, tagged):
 		for w in tagged:
 			if w[1] == 'NN' or w[1] == 'NNS' or w[1] == 'NNP' or w[1] == 'NNPS':
-				self.addWord(w[0])
+				self.addWord(st.stem(w[0]))
+
 
 # A Test Document - inherits from Document
 class Query(Document):
@@ -49,18 +60,21 @@ def tokNTag(file):
 	return tagged
 
 # Function to calculate distance between two documents
-def dist(q, d):
+def dist(q, d, total_docs):
 	numerator  = 0
 	den1 = 0
 	den2 = 0
 
 	for w in q.WORD_FREQS:
-		den1 += (q.WORD_FREQS[w]**2)
+		if w in IDF:
+			den1 += (q.WORD_FREQS[w]**2)*(IDF[w]**2)
+		else:
+			den1 += (q.WORD_FREQS[w]**2)*(math.log(total_docs/1)**2)
 		if w in d.WORD_FREQS:
-			numerator += q.WORD_FREQS[w] * d.WORD_FREQS[w]
+			numerator += q.WORD_FREQS[w] * d.WORD_FREQS[w]*(IDF[w]**2)
 
 	for w in d.WORD_FREQS:
-		den2 += (d.WORD_FREQS[w]**2)
+		den2 += (d.WORD_FREQS[w]**2)*(IDF[w]**2)
 
 	distance = numerator/(math.sqrt(den1) * math.sqrt(den2))
 	return distance
@@ -72,7 +86,7 @@ def KNN(query, docs, k):
 	KND = []
 
 	for doc in docs:
-		distance = dist(query, doc)
+		distance = dist(query, doc, len(docs))
 
 		if len(KNN) == 0:
 			KNN.append(distance)
@@ -89,12 +103,18 @@ def KNN(query, docs, k):
 
 	return KND[0:k]
 
+# function to populate the IDF dictionary
+def make_idf(total_docs):
+	for word in TOTAL_FREQS:
+		total_docs_f = math.floor(total_docs)
+		tfw_f = math.floor(TOTAL_FREQS[word])
+		IDF[word] = math.log(total_docs_f/(1+tfw_f))
 
 
 # MAIN
-if len(sys.argv) != 3:
-	print("Usage: python TC_simpleKNN.py <Training Labels File> <Test Labels File>")
-	print("Example: python TC_simpleKNN.py corpus1_train.labels corpus1_test.list")
+if len(sys.argv) != 4:
+	print("Usage: python TC_tfidf.py <Training Labels File> <Test Labels File> <Output Labels>")
+	print("Example: python TC_tfidf.py corpus1_train.labels corpus1_test.list myOutput.predicted")
 	sys.exit(-1)
 
 #Process training files
@@ -117,12 +137,15 @@ for line in fid:
 
 fid.close()
 
+make_idf(len(docs))
+print IDF
+
 # Process test files
 testLabelsFile = str(sys.argv[2])
 dir = os.path.dirname(os.path.realpath(testLabelsFile))
 
 fid = open(testLabelsFile, 'r')
-fid2 = open("Output4", 'w')
+fid2 = open(str(sys.argv[3]), 'w')
 
 queries = []
 for line in fid:
@@ -137,7 +160,6 @@ for line in fid:
 	KND = KNN(curQuery, docs, 7)
 	possibilities = {}
 	for d in KND:
-		print d.label
 		if d.label in possibilities:
 			possibilities[d.label] += 1
 		else:
@@ -147,8 +169,6 @@ for line in fid:
 		if possibilities[p] > max:
 			max = possibilities[p]
 			guess = p
-	print guess
-	print " "
 
 	fid2.write(curFile+" "+guess+"\n")
 
