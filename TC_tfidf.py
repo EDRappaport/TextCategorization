@@ -3,6 +3,7 @@ import os
 import math
 import nltk
 from nltk.stem.lancaster import LancasterStemmer
+from nltk.corpus import wordnet as wn
 
 st = LancasterStemmer()
 
@@ -36,6 +37,10 @@ class Document(object):
 		for w in tagged:
 			if w[1] == 'NN' or w[1] == 'NNS' or w[1] == 'NNP' or w[1] == 'NNPS':
 				self.addWord(st.stem(w[0]))
+				for sw in wn.synsets(w[0], wn.NOUN):
+					for swl in sw.lemmas:
+						self.addWord(st.stem(swl.name))
+
 
 
 # A Test Document - inherits from Document
