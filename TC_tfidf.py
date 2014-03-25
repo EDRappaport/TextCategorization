@@ -23,23 +23,23 @@ class Document(object):
 		self.WORD_FREQS = {} #empty dictionary (hash table)
 		self.label = type #doc label
 
-	def addWord(self, word):
+	def addWord(self, word, weight):
 		if word in self.WORD_FREQS:
-			self.WORD_FREQS[word] += 1
+			self.WORD_FREQS[word] += weight
 		else:
-			self.WORD_FREQS[word] = 1
+			self.WORD_FREQS[word] = weight
 			if word in TOTAL_FREQS:
-				TOTAL_FREQS[word] += 1
+				TOTAL_FREQS[word] += weight
 			else :
-				TOTAL_FREQS[word] = 1
+				TOTAL_FREQS[word] = weight
 
 	def findWords(self, tagged):
 		for w in tagged:
 			if w[1] == 'NN' or w[1] == 'NNS' or w[1] == 'NNP' or w[1] == 'NNPS':
-				self.addWord(st.stem(w[0]))
+				self.addWord(st.stem(w[0]), 1)
 				for sw in wn.synsets(w[0], wn.NOUN):
 					for swl in sw.lemmas:
-						self.addWord(st.stem(swl.name))
+						self.addWord(st.stem(swl.name), 1)
 
 
 
