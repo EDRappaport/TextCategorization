@@ -92,7 +92,7 @@ def KNN(query, docs, k):
 
 
 # MAIN
-if len(sys.argv) != 3:
+if len(sys.argv) != 4:
 	print("Usage: python TC_simpleKNN.py <Training Labels File> <Test Labels File>")
 	print("Example: python TC_simpleKNN.py corpus1_train.labels corpus1_test.list")
 	sys.exit(-1)
@@ -122,7 +122,7 @@ testLabelsFile = str(sys.argv[2])
 dir = os.path.dirname(os.path.realpath(testLabelsFile))
 
 fid = open(testLabelsFile, 'r')
-fid2 = open("Output4", 'w')
+fid2 = open(str(sys.argv[3]), 'w')
 
 queries = []
 for line in fid:
@@ -134,10 +134,9 @@ for line in fid:
 	curQuery.findWords(tagged)
 
 	queries.append(curQuery)
-	KND = KNN(curQuery, docs, 7)
+	KND = KNN(curQuery, docs, 50)
 	possibilities = {}
 	for d in KND:
-		print d.label
 		if d.label in possibilities:
 			possibilities[d.label] += 1
 		else:
@@ -147,8 +146,6 @@ for line in fid:
 		if possibilities[p] > max:
 			max = possibilities[p]
 			guess = p
-	print guess
-	print " "
 
 	fid2.write(curFile+" "+guess+"\n")
 

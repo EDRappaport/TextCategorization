@@ -36,10 +36,10 @@ class Document(object):
 	def findWords(self, tagged):
 		for w in tagged:
 			if w[1] == 'NN' or w[1] == 'NNS' or w[1] == 'NNP' or w[1] == 'NNPS':
-				self.addWord(st.stem(w[0]), 1)
+				self.addWord((w[0].lower()), 1)
 				for sw in wn.synsets(w[0], wn.NOUN):
 					for swl in sw.lemmas:
-						self.addWord(st.stem(swl.name), 1)
+						self.addWord(((swl.name.lower())), .5)
 
 
 
@@ -51,7 +51,7 @@ class Query(Document):
 		self.WORD_FREQS = {} #empty dictionary (hash table)
 		self.fileName = fn
 
-# Function to Toeknize and then Tag input file
+# Function to Tokenize and then Tag input file
 def tokNTag(file):
 	fid = open(file, 'r')
 	doc = fid.read()
@@ -74,7 +74,7 @@ def dist(q, d, total_docs):
 		if w in IDF:
 			den1 += (q.WORD_FREQS[w]**2)*(IDF[w]**2)
 		else:
-			den1 += (q.WORD_FREQS[w]**2)*(math.log(total_docs/1)**2)
+			den1 += (q.WORD_FREQS[w]**2)*(math.log10(total_docs/1)**2)
 		if w in d.WORD_FREQS:
 			numerator += q.WORD_FREQS[w] * d.WORD_FREQS[w]*(IDF[w]**2)
 
@@ -113,13 +113,14 @@ def make_idf(total_docs):
 	for word in TOTAL_FREQS:
 		total_docs_f = math.floor(total_docs)
 		tfw_f = math.floor(TOTAL_FREQS[word])
-		IDF[word] = math.log(total_docs_f/(1+tfw_f))
+		IDF[word] = math.log10(total_docs_f/(1+tfw_f))
+
 
 
 # MAIN
 if len(sys.argv) != 4:
-	print("Usage: python TC_tfidf.py <Training Labels File> <Test Labels File> <Output Labels>")
-	print("Example: python TC_tfidf.py corpus1_train.labels corpus1_test.list myOutput.predicted")
+	print("Usage: python myKNNtc.py <Training Labels File> <Test Labels File> <Output Labels>")
+	print("Example: python myKNNtc.py corpus1_train.labels corpus1_test.list myOutput.predicted")
 	sys.exit(-1)
 
 #Process training files
@@ -143,7 +144,14 @@ for line in fid:
 fid.close()
 
 make_idf(len(docs))
-print IDF
+
+d = docs[0]
+if d.label == 'I' or d.label == 'O':
+	print "Corpus 2"
+	K = 50 #K from KNN
+else:
+	print "Corpus 1 or 3"
+	K = 1
 
 # Process test files
 testLabelsFile = str(sys.argv[2])
@@ -162,7 +170,7 @@ for line in fid:
 	curQuery.findWords(tagged)
 
 	queries.append(curQuery)
-	KND = KNN(curQuery, docs, 7)
+	KND = KNN(curQuery, docs, K)
 	possibilities = {}
 	for d in KND:
 		if d.label in possibilities:
@@ -176,7 +184,6 @@ for line in fid:
 			guess = p
 
 	fid2.write(curFile+" "+guess+"\n")
-
 
 
 fid.close

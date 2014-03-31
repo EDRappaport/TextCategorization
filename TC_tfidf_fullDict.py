@@ -3,8 +3,7 @@ import os
 import math
 import nltk
 from nltk.stem.lancaster import LancasterStemmer
-
-st = LancasterStemmer()
+from nltk.corpus import wordnet as wn
 
 # REQUIRES INSTALLATION OF NLTK AND OTHER PACKAGES
 # OUTLINED IN: http://www.nltk.org/install.html AND
@@ -13,6 +12,8 @@ st = LancasterStemmer()
 
 TOTAL_FREQS = {} #keep track of frequency in all docs for idf
 IDF = {} #final idf weights
+st = LancasterStemmer()
+K = 1 # the K in KNN
 
 # A Training Document - contains its label and feature vector
 class Document(object):
@@ -22,19 +23,38 @@ class Document(object):
 		self.WORD_FREQS = {} #empty dictionary (hash table)
 		self.label = type #doc label
 
-	def addWord(self, word):
+	def addWord(self, word, weight):
 		if word in self.WORD_FREQS:
-			self.WORD_FREQS[word] += 1
+			self.WORD_FREQS[word] += weight
 		else:
-			self.WORD_FREQS[word] = 1
+			self.WORD_FREQS[word] = weight
 			if word in TOTAL_FREQS:
-				TOTAL_FREQS[word] += 1
-			else:
-				TOTAL_FREQS[word] = 1
+				TOTAL_FREQS[word] += weight
+			else :
+				TOTAL_FREQS[word] = weight
 
 	def findWords(self, tagged):
 		for w in tagged:
-			self.addWord(w)
+			n = st.stem(w[0].lower())
+			my = n, w[1]
+#			self.addWord(my, 1)
+			if w[1] == 'NN' or w[1] == 'NNS' or w[1] == 'NNP' or w[1] == 'NNPS':
+				self.addWord(my, 1)
+				for sw in wn.synsets(w[0], wn.NOUN):
+					for swl in sw.lemmas:
+						my = st.stem(swl.name.lower()), w[1]
+						self.addWord(my, 1)
+			#if w[1] == 'JJ' or w[1] == 'JJS' or w[1] == 'JJR':
+			#	for sw in wn.synsets(w[0], wn.ADJ):
+			#		for swl in sw.lemmas:
+			#			my = swl.name.lower(), w[1]
+			#			self.addWord(my, 0)
+			if w[1] == 'VB' or w[1] == 'VBD' or w[1] == 'VBG' or w[1] == 'VBN' or w[1] == 'VBP' or w[1] == 'VBZ':
+				self.addWord(my, 1)
+				for sw in wn.synsets(w[0], wn.VERB):
+					for swl in sw.lemmas:
+						my = st.stem(swl.name.lower()), w[1]
+						self.addWord(my, 1)
 
 
 # A Test Document - inherits from Document
@@ -137,7 +157,6 @@ for line in fid:
 fid.close()
 
 make_idf(len(docs))
-print IDF
 
 # Process test files
 testLabelsFile = str(sys.argv[2])
@@ -156,7 +175,7 @@ for line in fid:
 	curQuery.findWords(tagged)
 
 	queries.append(curQuery)
-	KND = KNN(curQuery, docs, 3)
+	KND = KNN(curQuery, docs, K)
 	possibilities = {}
 	for d in KND:
 		if d.label in possibilities:
